@@ -3,9 +3,95 @@
 package countries
 
 import (
+	"embed"
+	"log"
+	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 )
+
+//go:embed data/*
+var content embed.FS
+
+type CountryData struct {
+	All        []Country
+	Alpha2     []string
+	Regions    []string
+	Subregions []string
+}
+
+func loadCountryData(dataPath string) (*CountryData, error) {
+	// Load countries Data from embedded Data files
+	allCountries := make(map[string]Country)
+	err := loadCountries(filepath.Join(dataPath, "countries"), allCountries)
+	if err != nil {
+		return nil, err
+	}
+
+	// Load subdivisions Data from embedded Data files
+	allSubdivisions := make(map[string]map[string]*Subdivision)
+	err = loadSubdivisions(filepath.Join(dataPath, "subdivisions"), allSubdivisions)
+	if err != nil {
+		return nil, err
+	}
+
+	// Load translations Data from embedded Data files
+	allTranslations := make(map[string]map[string]string)
+	err = loadTranslations(filepath.Join(dataPath, "translations"), allTranslations)
+	if err != nil {
+		return nil, err
+	}
+
+	// Load capitals Data from embedded Data file
+	allCapitals := make(map[string]string)
+	err = loadCapitals(filepath.Join(dataPath, "capitals.yaml"), allCapitals)
+	if err != nil {
+		return nil, err
+	}
+
+	// Load timezones Data from embedded CSV file
+	allTimezones := make(map[string][]string)
+	err = loadTimezones(filepath.Join(dataPath, "timezones.csv"), allTimezones)
+	if err != nil {
+		return nil, err
+	}
+
+	// Build and sort All slice
+	var all []Country
+	for countryAlpha2, c := range allCountries {
+		c.Capital = allCapitals[countryAlpha2]
+		c.Subdivisions = make(map[string]Subdivision)
+		for code, subdivision := range allSubdivisions[countryAlpha2] {
+			if subdivision.Type == "metropolitan_city" && subdivision.Translations["en"] == c.Capital {
+				subdivision.Capital = true
+			}
+			c.Subdivisions[code] = *subdivision
+		}
+		c.Timezones = allTimezones[countryAlpha2]
+		c.Translations = make(map[string]string)
+		for locale, translations := range allTranslations {
+			c.Translations[locale] = translations[countryAlpha2]
+		}
+		all = append(all, c)
+	}
+	sort.Slice(all, func(i, j int) bool {
+		return all[i].Alpha2 < all[j].Alpha2
+	})
+
+	// Build the required variables
+	alpha2 := alpha2(all)
+	regions := regions(all)
+	subregions := subregions(all)
+
+	// Return the structured Data
+	return &CountryData{
+		All:        all,
+		Alpha2:     alpha2,
+		Regions:    regions,
+		Subregions: subregions,
+	}, nil
+}
 
 // Coord represents a geographic coordinate.
 type Coord struct {
@@ -93,7 +179,7 @@ type Subdivision struct {
 // InEU returns all countries that are members of the European Union.
 func InEU() []Country {
 	result := make([]Country, 0)
-	for _, c := range All {
+	for _, c := range Data.All {
 		if c.EUMember {
 			result = append(result, c)
 		}
@@ -104,7 +190,7 @@ func InEU() []Country {
 // InRegion returns all countries that are part of the region.
 func InRegion(region string) []Country {
 	result := make([]Country, 0)
-	for _, c := range All {
+	for _, c := range Data.All {
 		if c.Region == region {
 			result = append(result, c)
 		}
@@ -115,7 +201,7 @@ func InRegion(region string) []Country {
 // InSubregion returns all countries that are part of the subregion.
 func InSubregion(subregion string) []Country {
 	result := make([]Country, 0)
-	for _, c := range All {
+	for _, c := range Data.All {
 		if c.Subregion == subregion {
 			result = append(result, c)
 		}
@@ -223,12 +309,20 @@ var flagsSlice = []struct {
 
 var flagsCodePoints map[rune]rune
 
+var Data *CountryData
+
 func init() {
 	// Initialize the map
 	flagsCodePoints = make(map[rune]rune, len(flagsSlice))
 
 	for _, entry := range flagsSlice {
 		flagsCodePoints[entry.letter] = entry.flag
+	}
+
+	var err error
+	Data, err = loadCountryData("data")
+	if err != nil {
+		log.Fatalf("Error: %s", err)
 	}
 }
 

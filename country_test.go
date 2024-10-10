@@ -240,7 +240,7 @@ func ExampleGet_readmeGDPRCompliant() {
 }
 
 func ExampleGet_readmeCountryFinders() {
-	allCountries := countries.All
+	allCountries := countries.Data.All
 	countriesInEurope := countries.InRegion("Europe")
 	countriesInSouthernAsia := countries.InSubregion("Southern Asia")
 	countriesInEU := countries.InEU()
@@ -256,19 +256,19 @@ func ExampleGet_readmeCountryFinders() {
 }
 
 func TestAll(t *testing.T) {
-	assert.Equal(t, 249, len(countries.All))
-	assert.Equal(t, "AD", countries.All[0].Alpha2)
+	assert.Equal(t, 249, len(countries.Data.All))
+	assert.Equal(t, "AD", countries.Data.All[0].Alpha2)
 }
 
 func TestAlpha2(t *testing.T) {
-	a := countries.Alpha2
+	a := countries.Data.Alpha2
 	assert.Equal(t, 249, len(a))
 	assert.Equal(t, "AD", a[0])
 	assert.Equal(t, "ZW", a[248])
 }
 
 func TestRegions(t *testing.T) {
-	regions := countries.Regions
+	regions := countries.Data.Regions
 	assert.Equal(t, 5, len(regions))
 	assert.Equal(t, "Africa", regions[0])
 	assert.Equal(t, "Americas", regions[1])
@@ -278,7 +278,7 @@ func TestRegions(t *testing.T) {
 }
 
 func TestSubregions(t *testing.T) {
-	subregions := countries.Subregions
+	subregions := countries.Data.Subregions
 	assert.Equal(t, 22, len(subregions))
 	assert.Equal(t, "Australia and New Zealand", subregions[0])
 	assert.Equal(t, "Western Europe", subregions[21])
@@ -366,7 +366,7 @@ func TestMatchPostalCode(t *testing.T) {
 	jm := countries.Get("JM")
 	assert.False(t, jm.MatchPostalCode("35018"))
 
-	for _, c := range countries.All {
+	for _, c := range countries.Data.All {
 		assert.NotPanics(t, func() {
 			c.MatchPostalCode("35018")
 		})
@@ -390,7 +390,7 @@ func TestFormatAddress(t *testing.T) {
 	address = es.FormatAddress("Enrico Pilotto", "via Garibaldi 15", "97011", "Acate", "xx")
 	assert.Equal(t, "Enrico Pilotto\nvia Garibaldi 15\n97011 Acate\nxx\nSpain", address)
 
-	for _, c := range countries.All {
+	for _, c := range countries.Data.All {
 		address := c.FormatAddress("Enrico Pilotto", "via Garibaldi 15", "97011", "Acate", "RG")
 		assert.False(t, strings.Contains(address, "{{"), fmt.Sprintf("Invalid formatted address for country %s", c.Alpha2))
 	}
