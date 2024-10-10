@@ -189,33 +189,47 @@ func (c *Country) GDPRCompliant() bool {
 	return c.EEAMember || c.Alpha2 == "GB"
 }
 
-var flagsCodePoints = map[rune]rune{
-	'a': '🇦',
-	'b': '🇧',
-	'c': '🇨',
-	'd': '🇩',
-	'e': '🇪',
-	'f': '🇫',
-	'g': '🇬',
-	'h': '🇭',
-	'i': '🇮',
-	'j': '🇯',
-	'k': '🇰',
-	'l': '🇱',
-	'm': '🇲',
-	'n': '🇳',
-	'o': '🇴',
-	'p': '🇵',
-	'q': '🇶',
-	'r': '🇷',
-	's': '🇸',
-	't': '🇹',
-	'u': '🇺',
-	'v': '🇻',
-	'w': '🇼',
-	'x': '🇽',
-	'y': '🇾',
-	'z': '🇿',
+var flagsSlice = []struct {
+	letter rune
+	flag   rune
+}{
+	{'a', '🇦'},
+	{'b', '🇧'},
+	{'c', '🇨'},
+	{'d', '🇩'},
+	{'e', '🇪'},
+	{'f', '🇫'},
+	{'g', '🇬'},
+	{'h', '🇭'},
+	{'i', '🇮'},
+	{'j', '🇯'},
+	{'k', '🇰'},
+	{'l', '🇱'},
+	{'m', '🇲'},
+	{'n', '🇳'},
+	{'o', '🇴'},
+	{'p', '🇵'},
+	{'q', '🇶'},
+	{'r', '🇷'},
+	{'s', '🇸'},
+	{'t', '🇹'},
+	{'u', '🇺'},
+	{'v', '🇻'},
+	{'w', '🇼'},
+	{'x', '🇽'},
+	{'y', '🇾'},
+	{'z', '🇿'},
+}
+
+var flagsCodePoints map[rune]rune
+
+func init() {
+	// Initialize the map
+	flagsCodePoints = make(map[rune]rune, len(flagsSlice))
+
+	for _, entry := range flagsSlice {
+		flagsCodePoints[entry.letter] = entry.flag
+	}
 }
 
 // EmojiFlag returns the country Emoji flag.
