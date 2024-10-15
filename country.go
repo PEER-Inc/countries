@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-//go:embed data/*
+//go:embed data/**/*
 var content embed.FS
 
 type CountryData struct {
